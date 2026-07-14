@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Daily Chore & Coin Tracker</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --background: #f3f4f6;
+            --card-bg: #ffffff;
+            --text: #1f2937;
+            --text-light: #6b7280;
+            --border: #e5e7eb;
+            --success: #10b981;
+            --danger: #ef4444;
+            --gold: #f59e0b;
+            --gold-hover: #d97706;
+            --selected-day-bg: #e0e7ff;
+            --selected-day-border: #4f46e5;
+        }
+
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            -webkit-tap-highlight-color: transparent; 
+        }
+
+        body { 
+            background-color: var(--background); 
+            color: var(--text); 
+            padding: 16px; 
+            display: flex; 
+            justify-content: center; 
+            min-height: 100vh; 
+        }
+
+        .container { 
+            width: 100%; 
+            max-width: 700px; 
+            background: var(--card-bg); 
+            border-radius: 20px; 
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.08); 
+            padding: 24px; 
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        header { 
+            text-align: center; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 16px; 
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            color: var(--primary);
+            font-weight: 800;
+        }
+
+        /* Coin Bank Widget */
+        .coin-box { 
+            display: flex; 
+            align-items: center; 
+            gap: 16px; 
+            background: #fef3c7; 
+            border: 2px solid #fde68a; 
+            padding: 10px 20px; 
+            border-radius: 50px; 
+        }
+
+        .coin-display { 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            font-size: 1.6rem; 
+            font-weight: 800; 
+            color: #b45309; 
+        }
+
+        .coin-icon {
+            font-size: 1.8rem;
+            display: inline-block;
+        }
+
+        .coin-bounce { animation: bounce 0.4s ease-out; }
+        @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.3); } }
+
+        .reset-btn { 
+            background-color: var(--gold); 
+            color: white; 
+            border: none; 
+            border-radius: 20px; 
+            padding: 6px 14px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            font-size: 0.85rem;
+            transition: background 0.2s;
+        }
+        .reset-btn:hover { background-color: var(--gold-hover); }
+
+        /* Calendar Ribbon styling */
+        .calendar-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            color: var(--text);
+            padding: 0 4px;
+        }
+
+        .nav-cal-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--primary);
+            padding: 4px 12px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+        .nav-cal-btn:hover {
+            background: var(--background);
+        }
+
+        .calendar-ribbon {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 8px 4px;
+            scroll-behavior: smooth;
+            scrollbar-width: none; /* Firefox */
+        }
+        .calendar-ribbon::-webkit-scrollbar {
+            display: none; /* Safari/Chrome */
+        }
+
+        .day-card {
+            flex: 0 0 70px;
+            height: 85px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: var(--background);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .day-card.selected {
+            background: var(--selected-day-bg);
+            border-color: var(--selected-day-border);
+        }
+
+        .day-card .day-name {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-light);
+            text-transform: uppercase;
+        }
+        .day-card.selected .day-name {
+            color: var(--primary);
+        }
+
+        .day-card .day-num {
+            font-size: 1.3rem;
+            font-weight: 800;
+            margin: 2px 0;
+        }
+        .day-card.selected .day-num {
+            color: var(--primary);
+        }
+
+        .day-card .day-month {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-light);
+        }
+        .day-card.selected .day-month {
+            color: var(--primary);
+        }
+
+        /* Divider */
+        .divider {
+            height: 1px;
+            background-color: var(--border);
+            width: 100%;
+        }
+
+        /* Task Master List Form & Admin Toggle */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .toggle-edit-btn {
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+        .toggle-edit-btn:hover {
+            background-color: var(--background);
+        }
+
+        .chore-form { 
+            display: none; /* Hidden by default, shown when "Manage Chores" is toggled */
+            grid-template-columns: 1fr 100px auto; 
+            gap: 10px; 
+            margin-bottom: 16px; 
+            background: #f9fafb;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px dashed var(--border);
+        }
+        .chore-form.show {
+            display: grid;
+        }
+
+        input { 
+            padding: 12px; 
+            font-size: 1rem; 
+            border: 2px solid var(--border); 
+            border-radius: 8px; 
+            outline: none; 
+            background-color: white;
+        }
+        input:focus {
+            border-color: var(--primary);
+        }
+
+        .add-btn { 
+            background-color: var(--primary); 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            padding: 0 20px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            transition: background 0.2s;
+        }
+        .add-btn:hover { background-color: var(--primary-hover); }
+
+        /* Chore List styling */
+        .chore-list { 
+            list-style: none; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 12px; 
+        }
+
+        .chore-item { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            padding: 16px; 
+            border: 2px solid var(--border); 
+            border-radius: 12px; 
+            background: var(--card-bg);
+            transition: all 0.2s ease;
+        }
+
+        .chore-item.completed { 
+            background-color: #f9fafb; 
+            border-color: var(--border);
+            opacity: 0.75; 
+        }
+
+        .chore-left { 
+            display: flex; 
+            align-items: center; 
+            gap: 16px; 
+            cursor: pointer; 
+            flex-grow: 1; 
+        }
+
+        .checkbox { 
+            width: 32px; 
+            height: 32px; 
+            border: 2px solid var(--border); 
+            border-radius: 8px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            transition: all 0.2s;
+            background: white;
+        }
+
+        .completed .checkbox { 
+            background-color: var(--success); 
+            border-color: var(--success); 
+        }
+        .completed .checkbox::after { 
+            content: "✓"; 
+            color: white; 
+            font-weight: bold; 
+            font-size: 1.2rem;
+        }
+
+        .chore-title { 
+            font-size: 1.15rem; 
+            font-weight: 600; 
+        }
+        .completed .chore-title { 
+            text-decoration: line-through; 
+            color: var(--text-light); 
+        }
+
+        .chore-coin-reward { 
+            color: #b45309; 
+            font-size: 0.9rem; 
+            font-weight: 700; 
+            margin-top: 2px;
+        }
+
+        .delete-btn { 
+            display: none; /* Hidden unless in Edit Mode */
+            background: none; 
+            color: var(--danger); 
+            border: none; 
+            padding: 8px 12px; 
+            font-size: 1.5rem; 
+            cursor: pointer; 
+            border-radius: 6px;
+        }
+        .delete-btn:hover {
+            background-color: #fee2e2;
+        }
+        .edit-mode .delete-btn {
+            display: block;
+        }
+        .edit-mode .chore-left {
+            pointer-events: none; /* Disable checkbox clicking while editing */
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--text-light);
+            padding: 24px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Chore & Coin Companion</h1>
+            
+            <!-- Running Coin Balance -->
+            <div class="coin-box">
+                <div class="coin-display">
+                    <span class="coin-icon" id="coinIcon">🪙</span>
+                    <span id="coinCount">0</span>
+                </div>
+                <button class="reset-btn" onclick="resetCoins()">Reset Total</button>
+            </div>
+        </header>
+
+        <!-- Calendar Widget -->
+        <div class="calendar-container">
+            <div class="calendar-header">
+                <button class="nav-cal-btn" onclick="shiftCalendar(-7)">◀</button>
+                <span id="currentMonthYear">July 2026</span>
+                <button class="nav-cal-btn" onclick="shiftCalendar(7)">▶</button>
+            </div>
+            <div class="calendar-ribbon" id="calendarRibbon"></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Chores Section Header -->
+        <div>
+            <div class="section-header">
+                <span class="section-title" id="listDateTitle">Today's Chores</span>
+                <button class="toggle-edit-btn" id="editToggleBtn" onclick="toggleEditMode()">Manage Chores</button>
+            </div>
+
+            <!-- Manage Chores Input Panel -->
+            <form class="chore-form" id="choreForm">
+                <input type="text" id="choreInput" placeholder="Add a standard chore..." required autocomplete="off">
+                <input type="number" id="coinValueInput" value="1" min="1" required title="Coins">
+                <button type="submit" class="add-btn">Add</button>
+            </form>
+
+            <!-- Active Chore List -->
+            <ul class="chore-list" id="choreList"></ul>
+            <div id="emptyState" class="empty-state" style="display: none;">No chores added yet. Tap "Manage Chores" above to add some!</div>
+        </div>
+    </div>
+
+    <script>
+        const choreForm = document.getElementById('choreForm');
+        const choreInput = document.getElementById('choreInput');
+        const coinValueInput = document.getElementById('coinValueInput');
+        const choreList = document.getElementById('choreList');
+        const coinCountDisplay = document.getElementById('coinCount');
+        const coinIcon = document.getElementById('coinIcon');
+        const calendarRibbon = document.getElementById('calendarRibbon');
+        const currentMonthYear = document.getElementById('currentMonthYear');
+        const listDateTitle = document.getElementById('listDateTitle');
+        const editToggleBtn = document.getElementById('editToggleBtn');
+        const emptyState = document.getElementById('emptyState');
+
+        // App States
+        // 1. Task Templates (The list of standard tasks repeating every day)
+        let templates = JSON.parse(localStorage.getItem('choreTemplates')) || [
+            { id: 1, text: "Make the bed", coins: 1 },
+            { id: 2, text: "Wash the dishes", coins: 2 },
+            { id: 3, text: "Tidy up room", coins: 2 }
+        ];
+
+        // 2. Daily checkbox tracking: keyed by "YYYY-MM-DD" -> { templateId: true/false }
+        let dailyStatus = JSON.parse(localStorage.getItem('dailyStatus')) || {};
+
+        // 3. Accumulated running coin total across the year
+        let totalCoins = parseInt(localStorage.getItem('totalCoins')) || 0;
+
+        // Current Calendar focus date state
+        let selectedDate = new Date(); // Starts on today
+        let anchorDate = new Date();   // Anchor for rendering the scroll ribbon
+
+        let editMode = false;
+
+        function saveState() {
+            localStorage.setItem('choreTemplates', JSON.stringify(templates));
+            localStorage.setItem('dailyStatus', JSON.stringify(dailyStatus));
+            localStorage.setItem('totalCoins', totalCoins.toString());
+            render();
+        }
+
+        // Generate format YYYY-MM-DD
+        function formatDateKey(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        // Render Ribbon Navigation
+        function renderCalendar() {
+            calendarRibbon.innerHTML = '';
+            
+            // Render 15 days ribbon centered on anchorDate
+            const start = new Date(anchorDate);
+            start.setDate(start.getDate() - 7); // Center ribbon
+
+            for (let i = 0; i < 15; i++) {
+                const current = new Date(start);
+                current.setDate(start.getDate() + i);
+
+                const dateKey = formatDateKey(current);
+                const isSelected = formatDateKey(selectedDate) === dateKey;
+
+                const dayCard = document.createElement('div');
+                dayCard.className = `day-card ${isSelected ? 'selected' : ''}`;
+                dayCard.onclick = () => selectDate(current);
+
+                const dayName = current.toLocaleDateString('en-US', { weekday: 'short' });
+                const dayNum = current.getDate();
+                const dayMonth = current.toLocaleDateString('en-US', { month: 'short' });
+
+                dayCard.innerHTML = `
+                    <span class="day-name">${dayName}</span>
+                    <span class="day-num">${dayNum}</span>
+                    <span class="day-month">${dayMonth}</span>
+                `;
+                calendarRibbon.appendChild(dayCard);
+                
+                if (isSelected) {
+                    // Center the active element in the scroll view
+                    setTimeout(() => {
+                        dayCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                    }, 50);
+                }
+            }
+
+            // Set Header Title for calendar month
+            currentMonthYear.textContent = anchorDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        }
+
+        function shiftCalendar(days) {
+            anchorDate.setDate(anchorDate.getDate() + days);
+            renderCalendar();
+        }
+
+        function selectDate(date) {
+            selectedDate = new Date(date);
+            renderCalendar();
+            render();
+        }
+
+        function toggleEditMode() {
+            editMode = !editMode;
+            if (editMode) {
+                editToggleBtn.textContent = "Done Editing";
+                choreForm.classList.add('show');
+                document.querySelector('.container').classList.add('edit-mode');
+            } else {
+                editToggleBtn.textContent = "Manage Chores";
+                choreForm.classList.remove('show');
+                document.querySelector('.container').classList.remove('edit-mode');
+            }
+            render();
+        }
+
+        // Render the main active daily chore checklist
+        function render() {
+            choreList.innerHTML = '';
+            const dateKey = formatDateKey(selectedDate);
+            
+            // Set Checklist header title
+            const todayKey = formatDateKey(new Date());
+            if (dateKey === todayKey) {
+                listDateTitle.textContent = "Today's Chores";
+            } else {
+                listDateTitle.textContent = selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+            }
+
+            if (templates.length === 0) {
+                emptyState.style.display = 'block';
+            } else {
+                emptyState.style.display = 'none';
+            }
+
+            // Get checked-off state dictionary for this date
+            const dayRecord = dailyStatus[dateKey] || {};
+
+            templates.forEach(chore => {
+                const isCompleted = !!dayRecord[chore.id];
+                const li = document.createElement('li');
+                li.className = `chore-item ${isCompleted ? 'completed' : ''}`;
+                
+                li.innerHTML = `
+                    <div class="chore-left" onclick="toggleChore(${chore.id})">
+                        <div class="checkbox"></div>
+                        <div>
+                            <div class="chore-title">${chore.text}</div>
+                            <div class="chore-coin-reward">🪙 +${chore.coins}</div>
+                        </div>
+                    </div>
+                    <button class="delete-btn" onclick="deleteTemplate(${chore.id})">×</button>
+                `;
+                choreList.appendChild(li);
+            });
+
+            coinCountDisplay.textContent = totalCoins;
+        }
+
+        // Add Chore Template (adds to general master list of chores)
+        choreForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const text = choreInput.value.trim();
+            const coins = parseInt(coinValueInput.value) || 1;
+            if (!text) return;
+
+            templates.push({
+                id: Date.now(),
+                text: text,
+                coins: coins
+            });
+
+            choreInput.value = '';
+            coinValueInput.value = '1';
+            saveState();
+        });
+
+        // Toggle Done status for a specific chore on the selected day
+        window.toggleChore = function(templateId) {
+            const dateKey = formatDateKey(selectedDate);
+            
+            if (!dailyStatus[dateKey]) {
+                dailyStatus[dateKey] = {};
+            }
+
+            const choreObj = templates.find(t => t.id === templateId);
+            if (!choreObj) return;
+
+            const wasCompleted = !!dailyStatus[dateKey][templateId];
+            dailyStatus[dateKey][templateId] = !wasCompleted;
+
+            // Apply coins
+            if (!wasCompleted) {
+                totalCoins += choreObj.coins;
+                triggerCoinAnimation();
+            } else {
+                totalCoins = Math.max(0, totalCoins - choreObj.coins);
+            }
+
+            saveState();
+        };
+
+        // Delete Chore Template (Permanently deletes the task from all future list cycles)
+        window.deleteTemplate = function(templateId) {
+            if (confirm("Permanently delete this chore from your standard list?")) {
+                // If checking off records exists, we clean up the coins? 
+                // Let's keep coin balance intact to avoid confusion, just delete the template.
+                templates = templates.filter(t => t.id !== templateId);
+                saveState();
+            }
+        };
+
+        function triggerCoinAnimation() {
+            coinIcon.classList.remove('coin-bounce');
+            void coinIcon.offsetWidth; // force browser reflow
+            coinIcon.classList.add('coin-bounce');
+        }
+
+        window.resetCoins = function() {
+            if (confirm("Are you sure you want to spend/reset all accumulated coins back to 0? (Chore states will not be wiped)")) {
+                totalCoins = 0;
+                saveState();
+            }
+        };
+
+        // Initialize calendar ribbon centering around today
+        renderCalendar();
+        render();
+    </script>
+</body>
+</html>
